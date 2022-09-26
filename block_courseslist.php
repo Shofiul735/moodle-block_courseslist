@@ -43,6 +43,7 @@ class block_courseslist extends block_base
     public function get_content()
     {
         global $OUTPUT;
+        global $COURSE, $DB;
 
         if ($this->content !== null) {
             return $this->content;
@@ -54,8 +55,12 @@ class block_courseslist extends block_base
         // Add logic here to define your template data or any other content.
 
         $index = 0;
+        $categories = null;
         if (isset($_GET['id'])) {
             $index = intval($_GET['id']) - 1;
+        }
+        if (isset($_GET['categories'])) {
+            $categories = $_GET['categories'];
         }
 
         $courses = get_courses();
@@ -63,8 +68,23 @@ class block_courseslist extends block_base
         $courses = array_slice($courses, 1);
         $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
         uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
-        $contentToDisplay = array_slice($content, $index * 4, 4);
 
+
+        // https://moodlever.blogspot.com/2011/01/how-to-get-student-list-of-course.html
+
+        for ($i = 0; $i < sizeof($content); $i++) {
+            $context = context_course::instance($content[$i]['id']); // https://github.com/marxjohnson moodle-block_quickfindlist/issues/24
+
+            $query = 'select count(u.id) as count from mdl_role_assignments as a, mdl_user as u where contextid=' . $context->id . ' and roleid=5 and a.userid=u.id;';
+            $rs = $DB->get_recordset_sql($query);
+            $content[$i]['total_student'] = $rs->current()->count;
+        }
+
+        if (!$categories) {
+            $contentToDisplay = array_slice($content, $index * 4, 4);
+        } else {
+            $contentToDisplay = array_slice(array_filter($content, fn ($i) => $i['category'] === $categories), 0, 4);
+        }
 
         $categories = array_unique(array_map(fn ($i) => $i['category'], $content));
         usort($categories, fn ($i1, $i2) => $i1 - $i2);
