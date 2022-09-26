@@ -44,14 +44,6 @@ class block_courseslist extends block_base
     {
         global $OUTPUT;
 
-        $courses = get_courses();
-        $courses = array_values($courses);
-        $courses = array_slice($courses, 1);
-        $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
-        uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
-        var_dump($content);
-        die;
-
         if ($this->content !== null) {
             return $this->content;
         }
@@ -60,11 +52,19 @@ class block_courseslist extends block_base
         $this->content->footer = 'A footer';
 
         // Add logic here to define your template data or any other content.
+
+        $courses = get_courses();
+        $courses = array_values($courses);
+        $courses = array_slice($courses, 1);
+        $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
+        uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
+        var_dump($content);
+        die;
+
+
         $data = [
-            'title' => 'Block Plugin',
-            'content' => 'Add logic here to define your template data or any other content.'
-                . 'Defines in which pages this block can be added.Defines in which pages this block can be added.'
-                . 'Defines in which pages this block can be added.'
+            'title' => 'Course List',
+            'content' => $content
         ];
 
         $this->content->text = $OUTPUT->render_from_template('block_test/content', $data);
@@ -86,5 +86,10 @@ class block_courseslist extends block_base
             'mod' => false,
             'my' => true,
         ];
+    }
+
+    public function hide_header()
+    {
+        return true;
     }
 }
