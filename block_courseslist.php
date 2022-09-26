@@ -44,6 +44,14 @@ class block_courseslist extends block_base
     {
         global $OUTPUT;
 
+        $courses = get_courses();
+        $courses = array_values($courses);
+        $courses = array_slice($courses, 1);
+        $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
+        uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
+        var_dump($content);
+        die;
+
         if ($this->content !== null) {
             return $this->content;
         }
