@@ -1,0 +1,15 @@
+<h3>{{ title }}</h3>
+
+{{#content}}
+<p class="card">
+  <a href="#">{{ fullname }}</a>
+</p>
+{{/content}}
+
+<ul class="pagination justify-content-center">
+  {{#pages}}
+  <li class="page-item">
+    <a class="page-link" href="#">{{ page }}</a>
+  </li>
+  {{/pages}}
+</ul>
