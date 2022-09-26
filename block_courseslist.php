@@ -52,22 +52,31 @@ class block_courseslist extends block_base
         $this->content->footer = 'A footer';
 
         // Add logic here to define your template data or any other content.
+        $index = 0;
+        if (isset($_GET['id'])) {
+            $index = intval($_GET['id']) - 1;
+        }
 
         $courses = get_courses();
         $courses = array_values($courses);
         $courses = array_slice($courses, 1);
         $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
         uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
-        var_dump($content);
-        die;
+        $contentToDisplay = array_slice($content, $index * 4, 4);
 
+        $pages = [];
+        $totalPage = sizeof($content) / 4;
+        for ($i = 1; $i <= $totalPage; $i++) {
+            $pages[] = ['page' => $i];
+        }
 
         $data = [
             'title' => 'Course List',
-            'content' => $content
+            'content' => $contentToDisplay,
+            'pages' => $pages,
         ];
 
-        $this->content->text = $OUTPUT->render_from_template('block_test/content', $data);
+        $this->content->text = $OUTPUT->render_from_template('block_courseslist/content', $data);
 
         return $this->content;
     }
