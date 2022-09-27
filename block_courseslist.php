@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use core_user\search\course_teacher;
+
 /**
  * Block definition class for the block_pluginname plugin.
  *
@@ -43,7 +45,7 @@ class block_courseslist extends block_base
     public function get_content()
     {
         global $OUTPUT;
-        global $COURSE, $DB;
+        global $USER, $DB;
 
         if ($this->content !== null) {
             return $this->content;
@@ -102,7 +104,15 @@ class block_courseslist extends block_base
             'pageUrl' => $this->page->url,
         ];
         // check if admin or student?
-        $this->content->text = $OUTPUT->render_from_template('block_courseslist/content', $data);
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher']); //getting role id
+        $isteacheranywhere = $DB->record_exists('role_assignments', ['userid' => $USER->id, 'roleid' => $roleid]); // if the user is a teacher of any of the courses
+
+
+        if (is_siteadmin($USER->id) || $isteacheranywhere) {
+            $this->content->text = $OUTPUT->render_from_template('block_courseslist/content', $data);
+        } else {
+            $this->content->text = $OUTPUT->render_from_template('block_courseslist/content_resticted', $data);
+        }
 
         return $this->content;
     }
