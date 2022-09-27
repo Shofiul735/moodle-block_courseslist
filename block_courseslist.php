@@ -64,19 +64,18 @@ class block_courseslist extends block_base
         if (isset($_GET['categories'])) {
             $categories = $_GET['categories'];
         }
-        // mdl_course_categories
-        $courses = get_courses();
+        $index = $index * 4 + 1;
+        $query = "SELECT id,category,fullname from mdl_course LIMIT {$index},4";
+        $courses = $DB->get_records_sql($query);
         $courses = array_values($courses);
-        $courses = array_slice($courses, 1);
-        $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
-        uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
         $sqlQuery = 'SELECT id,name FROM mdl_course_categories';
         $cat = $DB->get_records_sql($sqlQuery);
         $cat = array_values($cat);
-        // https://moodlever.blogspot.com/2011/01/how-to-get-student-list-of-course.html
 
-        for ($i = 0; $i < sizeof($content); $i++) {
-            $context = context_course::instance($content[$i]['id']); // https://github.com/marxjohnson moodle-block_quickfindlist/issues/24
+        // https://moodlever.blogspot.com/2011/01/how-to-get-student-list-of-course.html
+        for ($i = 0; $i < sizeof($courses); $i++) {
+            // https://github.com/marxjohnson moodle-block_quickfindlist/issues/24
+            $context = context_course::instance($courses[$i]->id);
 
             $query = 'select count(u.id) as count from mdl_role_assignments as a, mdl_user as u where contextid=' . $context->id . ' and roleid=5 and a.userid=u.id;';
             $rs = $DB->get_recordset_sql($query);
@@ -84,14 +83,19 @@ class block_courseslist extends block_base
         }
 
         if (!$categories) {
-            $contentToDisplay = array_slice($content, $index * 4, 4);
+            $contentToDisplay = $courses;
         } else {
-            $contentToDisplay = array_slice(array_filter($content, fn ($i) => $i['category'] === $categories), 0, 4);
+            $query = "SELECT id,category,fullname from mdl_course WHERE category={$categories}";
+            $result = $DB->get_records_sql($query);
+            $contentToDisplay = array_values($result);
         }
 
-
+        $query = "SELECT count(id) as count from mdl_course";
+        $result = $DB->get_records_sql($query);
+        $result = array_values($result);
+        $size = intval($result[0]->count);
         $pages = [];
-        $totalPage = sizeof($content) / 4;
+        $totalPage = ($size - 1) / 4;
         for ($i = 1; $i <= $totalPage; $i++) {
             $pages[] = ['page' => $i];
         }
@@ -111,7 +115,7 @@ class block_courseslist extends block_base
         if (is_siteadmin($USER->id) || $isteacheranywhere) {
             $this->content->text = $OUTPUT->render_from_template('block_courseslist/content', $data);
         } else {
-            $this->content->text = $OUTPUT->render_from_template('block_courseslist/content_resticted', $data);
+            $this->content->text = $OUTPUT->render_from_template('block_courseslist/content_restricted', $data);
         }
 
         return $this->content;
