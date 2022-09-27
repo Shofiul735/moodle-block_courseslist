@@ -2,15 +2,16 @@
 
 <form method="GET">
   <select
+    class="btn btn-light mr-3"
     style="padding: 10px; margin-bottom: 10px"
     name="categories"
     id="categories"
   >
     {{#categories}}
-    <option value="{{ cat }}">{{ cat }}</option>
+    <option value="{{ id }}">{{ name }}</option>
     {{/categories}}
   </select>
-  <button type="submit">Filter</button>
+  <button class="btn btn-outline-primary" type="submit">Filter</button>
 </form>
 
 {{#content}}

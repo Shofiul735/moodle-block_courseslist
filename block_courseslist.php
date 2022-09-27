@@ -50,7 +50,7 @@ class block_courseslist extends block_base
         }
 
         $this->content = new stdClass();
-        $this->content->footer = 'A footer';
+        $this->content->footer = '';
 
         // Add logic here to define your template data or any other content.
 
@@ -62,14 +62,15 @@ class block_courseslist extends block_base
         if (isset($_GET['categories'])) {
             $categories = $_GET['categories'];
         }
-
+        // mdl_course_categories
         $courses = get_courses();
         $courses = array_values($courses);
         $courses = array_slice($courses, 1);
         $content = array_map(fn ($item) => ['id' => $item->id, 'category' => $item->category, 'fullname' => $item->fullname, 'shortname' => $item->shortname], $courses);
         uasort($content, fn ($item1, $item2) => $item1['id'] - $item2['id']);
-
-
+        $sqlQuery = 'SELECT id,name FROM mdl_course_categories';
+        $cat = $DB->get_records_sql($sqlQuery);
+        $cat = array_values($cat);
         // https://moodlever.blogspot.com/2011/01/how-to-get-student-list-of-course.html
 
         for ($i = 0; $i < sizeof($content); $i++) {
@@ -86,11 +87,6 @@ class block_courseslist extends block_base
             $contentToDisplay = array_slice(array_filter($content, fn ($i) => $i['category'] === $categories), 0, 4);
         }
 
-        $categories = array_unique(array_map(fn ($i) => $i['category'], $content));
-        usort($categories, fn ($i1, $i2) => $i1 - $i2);
-
-        $categories = array_map(fn ($item) => ['cat' => $item], $categories);
-
 
         $pages = [];
         $totalPage = sizeof($content) / 4;
@@ -102,10 +98,10 @@ class block_courseslist extends block_base
             'title' => 'Course List',
             'content' => $contentToDisplay,
             'pages' => $pages,
-            'categories' => $categories,
+            'categories' => $cat,
             'pageUrl' => $this->page->url,
         ];
-
+        // check if admin or student?
         $this->content->text = $OUTPUT->render_from_template('block_courseslist/content', $data);
 
         return $this->content;
